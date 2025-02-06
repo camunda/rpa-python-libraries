@@ -9,7 +9,7 @@ A re-export of RPAFramework. As RPAFramework is [not maintained as of Feb 15, 20
 
 ## Camunda Utils
 
-This library offers keywords to interact with Camunda. It allows you to:
+This library offers keywords to interact with Camunda. They allow you to:
  - Set output variables
  - Upload and download documents
 
