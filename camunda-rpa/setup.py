@@ -1,0 +1,39 @@
+from setuptools import setup
+
+setup(
+   name='camunda-rpa',
+   version='0.1.0',
+   description='Exposes RPA libraries under the Camunda namespace',
+   author='Camunda Services GmbH',
+   author_email='info@camunda.com',
+   packages=[
+      'Camunda.Archive',
+      'Camunda.Browser.Selenium',
+      'Camunda.Calendar',
+      'Camunda.Desktop',
+      'Camunda.Desktop.Clipboard',
+      'Camunda.Desktop.OperatingSystem',
+      'Camunda.Excel.Application',
+      'Camunda.Excel.Files',
+      'Camunda.FileSystem',
+      'Camunda.FTP',
+      'Camunda.HTTP',
+      'Camunda.Images',
+      'Camunda.JavaAccessBridge',
+      'Camunda.JSON',
+      'Camunda.MFA',
+      'Camunda.MSGraph',
+      'Camunda.Outlook.Application',
+      'Camunda.PDF',
+      'Camunda.SAP',
+      'Camunda.Tables',
+      'Camunda.Tasks',
+      'Camunda.Windows',
+      'Camunda.Word.Application'
+      ], 
+   install_requires=[
+      "rpaframework",
+      "rpaframework-pdf",
+      "rpaframework-windows"
+   ], 
+)
