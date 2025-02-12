@@ -14,9 +14,9 @@ class Camunda:
     ROBOT_LIBRARY_SCOPE = "GLOBAL"
     ROBOT_LISTENER_API_VERSION = 2
     ROBOT_LIBRARY_DOC_FORMAT = "REST"
-    
+
     def __init__(self):
-        self.workspace_id = os.getenv('RPA_WORKSPACE_ID')
+        self.workspace_id = os.getenv("RPA_WORKSPACE_ID")
         self.base_url = "http://localhost:36227"
         self.ROBOT_LIBRARY_LISTENER = self
         self.outputs = {}
@@ -65,17 +65,13 @@ class Camunda:
             Set Output Variable    fileDescriptor    variableName="invoices"
         """
         url = f"{self.base_url}/file/store/{self.workspace_id}"
-        headers = {'Content-Type': 'application/json'}
+        headers = {"Content-Type": "application/json"}
 
-        data = {
-            "files": glob
-        }
+        data = {"files": glob}
 
         response = requests.post(url, headers=headers, data=json.dumps(data))
 
-
         if response.status_code != 200:
-            print(response.status_code, response.raise_for_status())
             response.raise_for_status()
 
         fileDescriptors = list(response.json().values())
@@ -90,11 +86,7 @@ class Camunda:
         return fileDescriptors
 
     @keyword
-    def download_documents(
-        self, 
-        fileDescriptor, 
-        path: Optional[str] = ''
-    ) -> List[str]:
+    def download_documents(self, fileDescriptor, path: Optional[str] = "") -> List[str]:
         """Retrieve one or multiple documents from the backend.
 
         :param fileDescriptor: The file descriptor of the document to retrieve.
@@ -115,22 +107,31 @@ class Camunda:
             fileDescriptor = [fileDescriptor]
 
         # Transform fileDescriptor to a list of file descriptors
-        fileDescriptor = {os.path.join(path, file["metadata"]["fileName"]): file for file in fileDescriptor}
+        fileDescriptor = {
+            os.path.join(path, file["metadata"]["fileName"]): file
+            for file in fileDescriptor
+        }
 
         url = f"{self.base_url}/file/retrieve/{self.workspace_id}"
-        headers = {'Content-Type': 'application/json'}
+        headers = {"Content-Type": "application/json"}
 
         response = requests.post(url, headers=headers, data=json.dumps(fileDescriptor))
 
         if response.status_code != 200:
             response.raise_for_status()
 
-        downloadedFiles = [file for file, result in response.json().items() if result["result"] == "OK"]
-        notFoundFiles = [file for file, result in response.json().items() if result["result"] == "NOT_FOUND"]
+        downloadedFiles = [
+            file for file, result in response.json().items() if result["result"] == "OK"
+        ]
+        notFoundFiles = [
+            file
+            for file, result in response.json().items()
+            if result["result"] == "NOT_FOUND"
+        ]
 
         for file in notFoundFiles:
             logger.warn(f"File {file} not found")
-        
+
         # If we only have 1 file, return the file path as a string
         if len(downloadedFiles) == 1:
             return downloadedFiles[0]
