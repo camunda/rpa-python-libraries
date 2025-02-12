@@ -1,37 +1,141 @@
+import requests
+import json
 import yaml
 import os
 import mimetypes
 import base64
 
+from typing import Any, List, Optional, Union, Dict
 from robot.api.deco import keyword
+from robot.api import logger
 
 
 class Camunda:
     ROBOT_LIBRARY_SCOPE = "GLOBAL"
     ROBOT_LISTENER_API_VERSION = 2
-
+    ROBOT_LIBRARY_DOC_FORMAT = "REST"
+    
     def __init__(self):
+        self.workspace_id = os.getenv('RPA_WORKSPACE_ID')
+        self.base_url = "http://localhost:36227"
         self.ROBOT_LIBRARY_LISTENER = self
         self.outputs = {}
 
     @keyword(name="Set Output Variable")
     def set_output_variable(self, name, value):
-        """
-        Stores the value in-memory with the name as key.
+        """Sets the output variable of the Task in the calling process.
+
+        :param name: The name of the output variable.
+        :param value: The value of the output variable.
+
+        Examples:
+
+        .. code-block:: robotframework
+
+            # Set the output variable 'result' to the value 'Hello, World!'
+            Set Output Variable    result    Hello, World!
+
+            # Set output variable 'result' to the value of the variable ${output}
+            Set Output Variable    result    ${output}
         """
         self.outputs[name] = value
 
-    @keyword(name="Set Output File")
-    def set_output_file(self, name, path):
+    @keyword
+    def upload_documents(self, glob: str, variableName: Optional[str] = None):
+        """Upload a document to Camunda. Optionaly store the file descriptor in a variable.
+
+        :param glob: A glob pattern with files to upload.
+        :param variableName: The name of the variable to store the file descriptor in.
+
+        Examples:
+
+        .. code-block:: robotframework
+
+            # Upload a single file
+            Upload Document    path/to/file.txt
+            Set Output Variable    fileDescriptor    ${fileDescriptor}
+
+            # Directly store the file descriptor in a variable
+            Upload Document    path/to/file.txt
+
+            # Upload all files in a directory
+            Upload Document    path/to/directory/*   variableName="invoices"
+
+            # Upload all .pdf files in the workspace
+            Set Output Variable    fileDescriptor    variableName="invoices"
         """
-        Parses the file at `path` using `create_file_object` and stores the return value in-memory with the name as a key.
+        url = f"{self.base_url}/file/store/{self.workspace_id}"
+        headers = {'Content-Type': 'application/json'}
+
+        data = {
+            "files": glob
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+
+
+        if response.status_code != 200:
+            print(response.status_code, response.raise_for_status())
+            response.raise_for_status()
+
+        fileDescriptors = list(response.json().values())
+
+        # If we only have 1 file, return the file descriptor as a string
+        if len(fileDescriptors) == 1:
+            fileDescriptors = fileDescriptors[0]
+
+        if variableName:
+            self.outputs[variableName] = fileDescriptors
+
+        return fileDescriptors
+
+    @keyword
+    def download_documents(
+        self, 
+        fileDescriptor, 
+        path: Optional[str] = ''
+    ) -> List[str]:
+        """Retrieve one or multiple documents from the backend.
+
+        :param fileDescriptor: The file descriptor of the document to retrieve.
+        :param path: The path where the document should be saved to. Defaults to root directory.
+
+        Examples:
+
+        .. code-block::  robotframework
+
+            # Downloads documents into `input` directory
+            ${inputFiles} =    Download Document    ${fileDescriptor}    input
+
+            # Downloads a single document into the root directory
+            ${inputFile} =    Download Document    ${fileDescriptor}
         """
-        try:
-            # Assuming create_file_object is a function you've written elsewhere
-            file_object = create_file_object(path)
-            self.outputs[name] = file_object
-        except Exception as e:
-            raise Exception(f"Failed to parse file and set output: {e}")
+
+        if isinstance(fileDescriptor, dict):
+            fileDescriptor = [fileDescriptor]
+
+        # Transform fileDescriptor to a list of file descriptors
+        fileDescriptor = {os.path.join(path, file["metadata"]["fileName"]): file for file in fileDescriptor}
+
+        url = f"{self.base_url}/file/retrieve/{self.workspace_id}"
+        headers = {'Content-Type': 'application/json'}
+
+        response = requests.post(url, headers=headers, data=json.dumps(fileDescriptor))
+
+        if response.status_code != 200:
+            response.raise_for_status()
+
+        downloadedFiles = [file for file, result in response.json().items() if result["result"] == "OK"]
+        notFoundFiles = [file for file, result in response.json().items() if result["result"] == "NOT_FOUND"]
+
+        for file in notFoundFiles:
+            logger.warn(f"File {file} not found")
+        
+        # If we only have 1 file, return the file path as a string
+        if len(downloadedFiles) == 1:
+            return downloadedFiles[0]
+
+        return downloadedFiles
 
     def _write_outputs_to_file(self):
         """
@@ -45,32 +149,3 @@ class Camunda:
         A listener method that is called after the test suite has finished execution.
         """
         self._write_outputs_to_file()
-
-
-def create_file_object(path):
-    # This is a placeholder for the actual file parsing logic.
-    # Replace this with the actual implementation.
-    print(f"create_file_object {path}")
-
-    if os.path.isfile(path):
-        file_name = os.path.basename(path)
-        file_name = file_name.replace(".", "_")
-        mime_type, _ = mimetypes.guess_type(path)
-        if mime_type and mime_type.startswith("image/"):
-            content = file_to_data_url(path)
-        else:
-            with open(path, "r", encoding="utf-8", errors="ignore") as f:
-                content = f.read()
-        return content
-
-
-def file_to_data_url(file_path):
-    """
-    Convert an image file to a data URL.
-    """
-    print(file_path)
-    mime_type, _ = mimetypes.guess_type(file_path)
-    with open(file_path, "rb", encoding="UTF8") as f:
-        encoded_string = base64.b64encode(f.read()).decode("utf-8")
-        data_url = f"data:{mime_type};base64,{encoded_string}"
-    return data_url
