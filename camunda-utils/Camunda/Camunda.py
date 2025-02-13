@@ -42,10 +42,11 @@ class Camunda:
 
     @keyword
     def upload_documents(self, glob: str, variableName: Optional[str] = None):
-        """Upload a document to Camunda. Optionaly store the file descriptor in a variable.
+        """Upload a document to Camunda. Optionaly store the file descriptor in a process variable.
 
         :param glob: A glob pattern with files to upload.
         :param variableName: The name of the variable to store the file descriptor in.
+        :return: A file descriptor or a list of file descriptors of the uploaded documents.
 
         Examples:
 
@@ -91,6 +92,7 @@ class Camunda:
 
         :param fileDescriptor: The file descriptor of the document to retrieve.
         :param path: The path where the document should be saved to. Defaults to root directory.
+        :return: A path or a list of paths to the downloaded files.
 
         Examples:
 
