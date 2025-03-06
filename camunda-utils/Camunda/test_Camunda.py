@@ -1,12 +1,77 @@
 import pytest
 import requests
 from unittest.mock import patch, Mock
-from .Camunda import Camunda
+from .Camunda import Camunda, Secrets
 
 
+# Secret mapping
+
+
+# Test for Secrets class
+def test_secrets_retrieval():
+    secrets_dict = {"KEY1": "value1", "KEY2": "value2"}
+    secrets = Secrets(secrets_dict)
+
+    assert secrets.KEY1 == "value1"
+    assert secrets.KEY2 == "value2"
+
+
+def test_secrets_non_existent_key():
+    secrets_dict = {"KEY1": "value1"}
+    secrets = Secrets(secrets_dict)
+
+    with pytest.raises(KeyError):
+        _ = secrets.KEY2
+
+
+@patch(
+    "os.environ",
+    {"CAMUNDA_SECRETS": '{"KEY1": "value1", "KEY2": "value2"}'},
+)
+@patch("robot.libraries.BuiltIn.BuiltIn.get_variable_value", return_value=None)
+@patch("robot.libraries.BuiltIn.BuiltIn.set_global_variable")
+def test_secret_mapping(mock_set_global_variable, mock_get_variable_value):
+    camunda = Camunda()
+
+    mock_set_global_variable.assert_called_with(
+        "${secrets}", {"KEY1": "value1", "KEY2": "value2"}
+    )
+
+    # Assert access via attributes
+    SECRETS = mock_set_global_variable.call_args[0][1]
+
+    assert SECRETS.KEY1 == "value1"
+    assert SECRETS.KEY2 == "value2"
+
+
+@patch("os.environ", {})
+@patch("robot.libraries.BuiltIn.BuiltIn.get_variable_value", return_value=None)
+@patch("robot.libraries.BuiltIn.BuiltIn.set_global_variable")
+def test_secret_mapping_no_secrets(mock_set_global_variable, mock_get_variable_value):
+    camunda = Camunda()
+    mock_set_global_variable.assert_not_called()
+
+
+@patch("os.environ", {"SECRET_KEY1": "value1"})
+@patch(
+    "robot.libraries.BuiltIn.BuiltIn.get_variable_value",
+    return_value={"EXISTING_KEY": "existing_value"},
+)
+@patch("robot.libraries.BuiltIn.BuiltIn.set_global_variable")
+def test_secret_mapping_existing_variable(
+    mock_set_global_variable, mock_get_variable_value
+):
+    camunda = Camunda()
+    mock_set_global_variable.assert_not_called()
+
+
+### File Handling
 @pytest.fixture
 def camunda():
-    return Camunda()
+    with patch("robot.libraries.BuiltIn.BuiltIn.get_variable_value"), patch(
+        "robot.libraries.BuiltIn.BuiltIn.set_global_variable"
+    ):
+        return Camunda()
 
 
 # File Upload

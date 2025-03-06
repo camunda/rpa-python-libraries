@@ -8,6 +8,20 @@ import base64
 from typing import Any, List, Optional, Union, Dict
 from robot.api.deco import keyword
 from robot.api import logger
+from robot.libraries.BuiltIn import BuiltIn
+
+SECRET_VARIABLE = "${secrets}"
+SECRET_ENV_NAME = "CAMUNDA_SECRETS"
+
+
+class Secrets(dict):
+    """
+    A wrapper around a dictionary that allows access to the values via attributes.
+    This allows access as `${SECRETS.key}` instead of `${SECRETS['key']}`
+    """
+
+    def __getattr__(self, name):
+        return self[name]
 
 
 class Camunda:
@@ -20,6 +34,34 @@ class Camunda:
         self.base_url = "http://localhost:36227"
         self.ROBOT_LIBRARY_LISTENER = self
         self.outputs = {}
+
+        self._map_secrets()
+
+    def _map_secrets(self):
+        """
+        Secrets are provided as a JSON object in the environment variable 'CAMUNDA_SECRETS'.
+        For easy access, we want to provide them as a robot variable instead.
+        """
+
+        built_in = BuiltIn()
+
+        existing_secrets = built_in.get_variable_value("${SECRETS}")
+
+        # Do not overwrite existing secrets
+        if existing_secrets:
+            return
+
+        # Get secrets from the environment variable
+        secrets_json = os.getenv(SECRET_ENV_NAME)
+
+        if not secrets_json:
+            return
+
+        secrets = json.loads(secrets_json)
+        secrets_wrapper = Secrets(secrets)
+
+        # Set Robot variable
+        built_in.set_global_variable(SECRET_VARIABLE, secrets_wrapper)
 
     @keyword(name="Set Output Variable")
     def set_output_variable(self, name, value):
