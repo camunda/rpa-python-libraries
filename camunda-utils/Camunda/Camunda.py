@@ -11,6 +11,7 @@ from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
 
 SECRET_VARIABLE = "${secrets}"
+SECRET_ENV_NAME = "CAMUNDA_SECRETS"
 
 
 class Secrets(dict):
@@ -40,7 +41,7 @@ class Camunda:
 
     def _map_secrets(self):
         """
-        Secrets are provided as environment variables with the prefix 'SECRET_' to the robot file.
+        Secrets are provided as a JSON object in the environment variable 'CAMUNDA_SECRETS'.
         For easy access, we want to provide them as a robot variable instead.
         """
 
@@ -52,16 +53,13 @@ class Camunda:
         if existing_secrets:
             return
 
-        # Get all Secrets from ENV, remove prefix
-        secrets = {
-            key[7:]: value
-            for key, value in os.environ.items()
-            if key.startswith("SECRET_")
-        }
+        # Get secrets from the environment variable
+        secrets_json = os.getenv(SECRET_ENV_NAME)
 
-        if not secrets:
+        if not secrets_json:
             return
 
+        secrets = json.loads(secrets_json)
         secrets_wrapper = Secrets(secrets)
 
         # Set Robot variable

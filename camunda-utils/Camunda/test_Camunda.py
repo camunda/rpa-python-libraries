@@ -26,7 +26,10 @@ def test_secrets_non_existent_key():
         _ = secrets.KEY2
 
 
-@patch("os.environ", {"SECRET_KEY1": "value1", "SECRET_KEY2": "value2"})
+@patch(
+    "os.environ",
+    {"CAMUNDA_SECRETS": '{"KEY1": "value1", "KEY2": "value2"}'},
+)
 @patch("robot.libraries.BuiltIn.BuiltIn.get_variable_value", return_value=None)
 @patch("robot.libraries.BuiltIn.BuiltIn.set_global_variable")
 def test_secret_mapping(mock_set_global_variable, mock_get_variable_value):
