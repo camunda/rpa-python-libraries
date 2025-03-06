@@ -20,9 +20,7 @@ def test_secrets_non_existent_key():
     secrets_dict = {"KEY1": "value1"}
     secrets = Secrets(secrets_dict)
 
-    with pytest.raises(
-        AttributeError, match="'Secrets' object has no attribute 'KEY2'"
-    ):
+    with pytest.raises(KeyError):
         _ = secrets.KEY2
 
 

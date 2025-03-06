@@ -21,9 +21,7 @@ class Secrets(dict):
     """
 
     def __getattr__(self, name):
-        if name in self:
-            return self[name]
-        raise AttributeError(f"'Secrets' object has no attribute '{name}'")
+        return self[name]
 
 
 class Camunda:
