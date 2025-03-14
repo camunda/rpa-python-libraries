@@ -43,18 +43,18 @@ class Camunda:
         For easy access, we want to provide them as a robot variable instead.
         """
 
+        # Get secrets from the environment variable
+        secrets_json = os.getenv(SECRET_ENV_NAME)
+
+        if not secrets_json:
+            return
+
         built_in = BuiltIn()
 
         existing_secrets = built_in.get_variable_value("${SECRETS}")
 
         # Do not overwrite existing secrets
         if existing_secrets:
-            return
-
-        # Get secrets from the environment variable
-        secrets_json = os.getenv(SECRET_ENV_NAME)
-
-        if not secrets_json:
             return
 
         secrets = json.loads(secrets_json)
