@@ -31,7 +31,7 @@ class Camunda:
 
     def __init__(self):
         self.workspace_id = os.getenv("RPA_WORKSPACE_ID")
-        self.base_url = "http://localhost:36227"
+        self.base_url = os.getenv("RPA_BASE_URL", "http://127.0.0.1:36227")
         self.ROBOT_LIBRARY_LISTENER = self
         self.outputs = {}
 

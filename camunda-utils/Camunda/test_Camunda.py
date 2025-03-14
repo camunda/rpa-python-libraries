@@ -65,6 +65,54 @@ def test_secret_mapping_existing_variable(
     mock_set_global_variable.assert_not_called()
 
 
+# Worker configuration
+
+
+# Uses default BaseURL
+@patch(
+    "os.environ",
+    {
+        "RPA_WORKSPACE_ID": "workspace_id",
+    },
+)
+@patch("requests.post")
+def test_default_base_url(mock_post):
+    camunda = Camunda()
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"file1": "descriptor1"}
+    mock_post.return_value = mock_response
+
+    camunda.upload_documents("file1.txt")
+
+    assert mock_post.call_args[0][0] == "http://127.0.0.1:36227/file/store/workspace_id"
+
+
+# With BaseURL
+@patch(
+    "os.environ",
+    {
+        "RPA_WORKSPACE_ID": "workspace_id",
+        "RPA_BASE_URL": "http://rpa-worker:12345",
+    },
+)
+@patch("requests.post")
+def test_custom_base_url(mock_post):
+    camunda = Camunda()
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"file1": "descriptor1"}
+    mock_post.return_value = mock_response
+
+    camunda.upload_documents("file1.txt")
+
+    assert (
+        mock_post.call_args[0][0] == "http://rpa-worker:12345/file/store/workspace_id"
+    )
+
+
 ### File Handling
 @pytest.fixture
 def camunda():
