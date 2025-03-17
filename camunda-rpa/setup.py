@@ -15,7 +15,6 @@ setup(
         "Camunda.Browser.Selenium",
         "Camunda.Calendar",
         "Camunda.Desktop",
-        "Camunda.Desktop.Clipboard",
         "Camunda.Desktop.OperatingSystem",
         "Camunda.Excel.Application",
         "Camunda.Excel.Files",
