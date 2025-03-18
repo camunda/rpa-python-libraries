@@ -25,12 +25,17 @@ class Secrets(dict):
 
 
 class Camunda:
+    """
+    A Robot Framework library that provides keywords to interact with Camunda from the RPA worker.
+    """
+
     ROBOT_LIBRARY_SCOPE = "GLOBAL"
     ROBOT_LISTENER_API_VERSION = 2
     ROBOT_LIBRARY_DOC_FORMAT = "REST"
 
     def __init__(self):
         self.workspace_id = os.getenv("RPA_WORKSPACE_ID")
+        self.job_key = os.getenv("RPA_ZEEBE_JOB_KEY")
         self.base_url = os.getenv("RPA_BASE_URL", "http://127.0.0.1:36227")
         self.ROBOT_LIBRARY_LISTENER = self
         self.outputs = {}
@@ -62,6 +67,34 @@ class Camunda:
 
         # Set Robot variable
         built_in.set_global_variable(SECRET_VARIABLE, secrets_wrapper)
+
+    @keyword(name="Throw BPMN Error")
+    def throw_bpmn_error(self, errorCode: str, errorMessage: str):
+        """Create a BPMN error and end script execution.
+
+        Your BPMN process should contain an error catch event to handle this error. Learn more about BPMN errors in the `Camunda docs`_.
+
+        :param errorCode: The error code to throw.
+        :param errorMessage: The error message to throw.
+
+        .. _Camunda docs: https://docs.camunda.io/docs/components/best-practices/development/dealing-with-problems-and-exceptions/#handling-errors-on-the-process-level
+        """
+        url = f"{self.base_url}/job/{self.job_key}/throw"
+        headers = {"Content-Type": "application/json"}
+
+        data = {
+            "errorCode": errorCode,
+            "errorMessage": errorMessage,
+            "variables": self.outputs,
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+
+        if response.status_code != 202:
+            response.raise_for_status()
+
+        # Stop the script execution and only do teardown after this keyword
+        BuiltIn().fatal_error(f"{errorCode} - {errorMessage}")
 
     @keyword(name="Set Output Variable")
     def set_output_variable(self, name, value):

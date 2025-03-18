@@ -1,5 +1,6 @@
 import pytest
 import requests
+import json
 from unittest.mock import patch, Mock
 from .Camunda import Camunda, Secrets
 
@@ -111,6 +112,69 @@ def test_custom_base_url(mock_post):
     assert (
         mock_post.call_args[0][0] == "http://rpa-worker:12345/file/store/workspace_id"
     )
+
+
+### BPMN Error
+
+
+# Throw error without variables
+@patch("requests.post")
+@patch("os.environ", {"RPA_ZEEBE_JOB_KEY": "12345"})
+def test_throw_bpmn_error(mock_post):
+    camunda = Camunda()
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_post.return_value = mock_response
+
+    with pytest.raises(Exception, match="ERROR_CODE - Error message") as excinfo:
+        camunda.throw_bpmn_error("ERROR_CODE", "Error message")
+
+    mock_post.assert_called_once_with(
+        "http://127.0.0.1:36227/job/12345/throw",
+        headers={"Content-Type": "application/json"},
+        data=json.dumps(
+            {
+                "errorCode": "ERROR_CODE",
+                "errorMessage": "Error message",
+                "variables": {},
+            }
+        ),
+    )
+
+    assert excinfo.value.ROBOT_EXIT_ON_FAILURE is True
+
+
+# Throw error with variables
+@patch("requests.post")
+@patch("os.environ", {"RPA_ZEEBE_JOB_KEY": "12345"})
+def test_throw_bpmn_error_variables(mock_post):
+    camunda = Camunda()
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_post.return_value = mock_response
+
+    with pytest.raises(Exception, match="ERROR_CODE - Error message") as excinfo:
+        camunda.set_output_variable("output1", "value1")
+        camunda.set_output_variable("output2", "value2")
+
+        camunda.throw_bpmn_error("ERROR_CODE", "Error message")
+
+    mock_post.assert_called_once_with(
+        "http://127.0.0.1:36227/job/12345/throw",
+        headers={"Content-Type": "application/json"},
+        data=json.dumps(
+            {
+                "errorCode": "ERROR_CODE",
+                "errorMessage": "Error message",
+                "variables": {
+                    "output1": "value1",
+                    "output2": "value2",
+                },
+            }
+        ),
+    )
+
+    assert excinfo.value.ROBOT_EXIT_ON_FAILURE is True
 
 
 ### File Handling
