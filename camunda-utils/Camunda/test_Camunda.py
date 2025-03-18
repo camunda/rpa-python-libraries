@@ -123,7 +123,7 @@ def test_custom_base_url(mock_post):
 def test_throw_bpmn_error(mock_post):
     camunda = Camunda()
     mock_response = Mock()
-    mock_response.status_code = 200
+    mock_response.status_code = 202
     mock_post.return_value = mock_response
 
     with pytest.raises(Exception, match="ERROR_CODE - Error message") as excinfo:
@@ -135,7 +135,35 @@ def test_throw_bpmn_error(mock_post):
         data=json.dumps(
             {
                 "errorCode": "ERROR_CODE",
+                "variables": {},
                 "errorMessage": "Error message",
+            }
+        ),
+    )
+
+    assert excinfo.value.ROBOT_EXIT_ON_FAILURE is True
+
+
+# Throw error without errorMessage
+@patch("requests.post")
+@patch("os.environ", {"RPA_ZEEBE_JOB_KEY": "12345"})
+def test_throw_bpmn_error_no_message(mock_post):
+    camunda = Camunda()
+    mock_response = Mock()
+    mock_response.status_code = 202
+    mock_post.return_value = mock_response
+
+    with pytest.raises(
+        Exception, match="ERROR_CODE - No error message provided"
+    ) as excinfo:
+        camunda.throw_bpmn_error("ERROR_CODE")
+
+    mock_post.assert_called_once_with(
+        "http://127.0.0.1:36227/job/12345/throw",
+        headers={"Content-Type": "application/json"},
+        data=json.dumps(
+            {
+                "errorCode": "ERROR_CODE",
                 "variables": {},
             }
         ),
@@ -150,7 +178,7 @@ def test_throw_bpmn_error(mock_post):
 def test_throw_bpmn_error_variables(mock_post):
     camunda = Camunda()
     mock_response = Mock()
-    mock_response.status_code = 200
+    mock_response.status_code = 202
     mock_post.return_value = mock_response
 
     with pytest.raises(Exception, match="ERROR_CODE - Error message") as excinfo:
@@ -165,11 +193,11 @@ def test_throw_bpmn_error_variables(mock_post):
         data=json.dumps(
             {
                 "errorCode": "ERROR_CODE",
-                "errorMessage": "Error message",
                 "variables": {
                     "output1": "value1",
                     "output2": "value2",
                 },
+                "errorMessage": "Error message",
             }
         ),
     )

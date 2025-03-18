@@ -69,13 +69,13 @@ class Camunda:
         built_in.set_global_variable(SECRET_VARIABLE, secrets_wrapper)
 
     @keyword(name="Throw BPMN Error")
-    def throw_bpmn_error(self, errorCode: str, errorMessage: str):
+    def throw_bpmn_error(self, errorCode: str, errorMessage: Optional[str] = None):
         """Create a BPMN error and end script execution.
 
         Your BPMN process should contain an error catch event to handle this error. Learn more about BPMN errors in the `Camunda docs`_.
 
         :param errorCode: The error code to throw.
-        :param errorMessage: The error message to throw.
+        :param errorMessage: The error message to throw. Defaults to None.
 
         .. _Camunda docs: https://docs.camunda.io/docs/components/best-practices/development/dealing-with-problems-and-exceptions/#handling-errors-on-the-process-level
         """
@@ -84,9 +84,11 @@ class Camunda:
 
         data = {
             "errorCode": errorCode,
-            "errorMessage": errorMessage,
             "variables": self.outputs,
         }
+
+        if errorMessage:
+            data["errorMessage"] = errorMessage
 
         response = requests.post(url, headers=headers, data=json.dumps(data))
 
@@ -94,7 +96,9 @@ class Camunda:
             response.raise_for_status()
 
         # Stop the script execution and only do teardown after this keyword
-        BuiltIn().fatal_error(f"{errorCode} - {errorMessage}")
+        BuiltIn().fatal_error(
+            f"{errorCode} - {errorMessage or 'No error message provided'}"
+        )
 
     @keyword(name="Set Output Variable")
     def set_output_variable(self, name, value):
