@@ -130,7 +130,7 @@ def test_throw_bpmn_error(mock_post):
         camunda.throw_bpmn_error("ERROR_CODE", "Error message")
 
     mock_post.assert_called_once_with(
-        "http://127.0.0.1:36227/job/12345/throw",
+        "http://127.0.0.1:36227/zeebe/job/12345/throw",
         headers={"Content-Type": "application/json"},
         data=json.dumps(
             {
@@ -159,7 +159,7 @@ def test_throw_bpmn_error_no_message(mock_post):
         camunda.throw_bpmn_error("ERROR_CODE")
 
     mock_post.assert_called_once_with(
-        "http://127.0.0.1:36227/job/12345/throw",
+        "http://127.0.0.1:36227/zeebe/job/12345/throw",
         headers={"Content-Type": "application/json"},
         data=json.dumps(
             {
@@ -185,17 +185,24 @@ def test_throw_bpmn_error_variables(mock_post):
         camunda.set_output_variable("output1", "value1")
         camunda.set_output_variable("output2", "value2")
 
-        camunda.throw_bpmn_error("ERROR_CODE", "Error message")
+        camunda.throw_bpmn_error(
+            "ERROR_CODE",
+            errorMessage="Error message",
+            variables={
+                "errorVar1": "value1",
+                "errorVar2": "value2",
+            },
+        )
 
     mock_post.assert_called_once_with(
-        "http://127.0.0.1:36227/job/12345/throw",
+        "http://127.0.0.1:36227/zeebe/job/12345/throw",
         headers={"Content-Type": "application/json"},
         data=json.dumps(
             {
                 "errorCode": "ERROR_CODE",
                 "variables": {
-                    "output1": "value1",
-                    "output2": "value2",
+                    "errorVar1": "value1",
+                    "errorVar2": "value2",
                 },
                 "errorMessage": "Error message",
             }

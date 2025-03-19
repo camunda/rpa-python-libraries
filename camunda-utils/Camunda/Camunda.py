@@ -69,17 +69,23 @@ class Camunda:
         built_in.set_global_variable(SECRET_VARIABLE, secrets_wrapper)
 
     @keyword(name="Throw BPMN Error")
-    def throw_bpmn_error(self, errorCode: str, errorMessage: Optional[str] = None):
+    def throw_bpmn_error(
+        self,
+        errorCode: str,
+        errorMessage: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+    ):
         """Create a BPMN error and end script execution.
 
         Your BPMN process should contain an error catch event to handle this error. Learn more about BPMN errors in the `Camunda docs`_.
 
         :param errorCode: The error code to throw.
         :param errorMessage: The error message to throw. Defaults to None.
+        :param variables: A dictionary of variables to pass to the error event. Defaults to None.
 
         .. _Camunda docs: https://docs.camunda.io/docs/components/best-practices/development/dealing-with-problems-and-exceptions/#handling-errors-on-the-process-level
         """
-        url = f"{self.base_url}/job/{self.job_key}/throw"
+        url = f"{self.base_url}/zeebe/job/{self.job_key}/throw"
         headers = {"Content-Type": "application/json"}
 
         data = {
@@ -89,6 +95,9 @@ class Camunda:
 
         if errorMessage:
             data["errorMessage"] = errorMessage
+
+        if variables:
+            data["variables"] = variables
 
         response = requests.post(url, headers=headers, data=json.dumps(data))
 
