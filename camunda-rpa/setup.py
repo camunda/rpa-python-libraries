@@ -35,7 +35,9 @@ setup(
         "Camunda.Word.Application",
     ],
     install_requires=[
-        "selenium==4.29.0",
+        "selenium >= 4.29.0",
+        "pillow >= 10.4.0",
+        "PyYAML >= 6.0.0",
         "rpaframework",
         "rpaframework-pdf",
         "rpaframework-windows",
