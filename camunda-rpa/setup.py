@@ -6,7 +6,7 @@ os.chdir(setup_dir)
 
 setup(
     name="camunda-rpa",
-    version="0.2.0",
+    version="0.3.0",
     description="Exposes RPA libraries under the Camunda namespace",
     author="Camunda Services GmbH",
     author_email="info@camunda.com",
@@ -34,5 +34,12 @@ setup(
         "Camunda.Windows",
         "Camunda.Word.Application",
     ],
-    install_requires=["rpaframework", "rpaframework-pdf", "rpaframework-windows"],
+    install_requires=[
+        "selenium >= 4.29.0",
+        "pillow >= 10.4.0",
+        "PyYAML >= 6.0.0",
+        "rpaframework",
+        "rpaframework-pdf",
+        "rpaframework-windows",
+    ],
 )
