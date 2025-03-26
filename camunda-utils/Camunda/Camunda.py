@@ -90,7 +90,6 @@ class Camunda:
 
         data = {
             "errorCode": errorCode,
-            "variables": self.outputs,
         }
 
         if errorMessage:
