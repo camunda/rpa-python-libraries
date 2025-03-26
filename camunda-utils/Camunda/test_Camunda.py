@@ -135,7 +135,6 @@ def test_throw_bpmn_error(mock_post):
         data=json.dumps(
             {
                 "errorCode": "ERROR_CODE",
-                "variables": {},
                 "errorMessage": "Error message",
             }
         ),
@@ -164,7 +163,6 @@ def test_throw_bpmn_error_no_message(mock_post):
         data=json.dumps(
             {
                 "errorCode": "ERROR_CODE",
-                "variables": {},
             }
         ),
     )
@@ -200,11 +198,11 @@ def test_throw_bpmn_error_variables(mock_post):
         data=json.dumps(
             {
                 "errorCode": "ERROR_CODE",
+                "errorMessage": "Error message",
                 "variables": {
                     "errorVar1": "value1",
                     "errorVar2": "value2",
                 },
-                "errorMessage": "Error message",
             }
         ),
     )
