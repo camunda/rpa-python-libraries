@@ -38,7 +38,6 @@ class Camunda:
         self.job_key = os.getenv("RPA_ZEEBE_JOB_KEY")
         self.base_url = os.getenv("RPA_BASE_URL", "http://127.0.0.1:36227")
         self.ROBOT_LIBRARY_LISTENER = self
-        self.outputs = {}
 
         self._map_secrets()
 
@@ -125,7 +124,20 @@ class Camunda:
             # Set output variable 'result' to the value of the variable ${output}
             Set Output Variable    result    ${output}
         """
-        self.outputs[name] = value
+
+        url = f"{self.base_url}/workspace/{self.workspace_id}/variables"
+        headers = {"Content-Type": "application/json"}
+
+        data = {
+            "variables": {
+                name: value,
+            }
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+
+        if response.status_code != 200:
+            response.raise_for_status()
 
     @keyword
     def upload_documents(self, glob: str, variableName: Optional[str] = None):
@@ -169,7 +181,7 @@ class Camunda:
             fileDescriptors = fileDescriptors[0]
 
         if variableName:
-            self.outputs[variableName] = fileDescriptors
+            self.set_output_variable(variableName, fileDescriptors)
 
         return fileDescriptors
 
@@ -226,16 +238,3 @@ class Camunda:
             return downloadedFiles[0]
 
         return downloadedFiles
-
-    def _write_outputs_to_file(self):
-        """
-        Writes the current state of self.outputs to 'outputs.yml'.
-        """
-        with open("outputs.yml", "w", encoding="UTF8") as outfile:
-            yaml.dump(self.outputs, outfile, default_flow_style=False)
-
-    def _close(self):
-        """
-        A listener method that is called after the test suite has finished execution.
-        """
-        self._write_outputs_to_file()

@@ -157,7 +157,7 @@ def test_throw_bpmn_error_no_message(mock_post):
     ) as excinfo:
         camunda.throw_bpmn_error("ERROR_CODE")
 
-    mock_post.assert_called_once_with(
+    mock_post.assert_called_with(
         "http://127.0.0.1:36227/zeebe/job/12345/throw",
         headers={"Content-Type": "application/json"},
         data=json.dumps(
@@ -192,7 +192,7 @@ def test_throw_bpmn_error_variables(mock_post):
             },
         )
 
-    mock_post.assert_called_once_with(
+    mock_post.assert_called_with(
         "http://127.0.0.1:36227/zeebe/job/12345/throw",
         headers={"Content-Type": "application/json"},
         data=json.dumps(
@@ -221,7 +221,8 @@ def camunda():
 
 # File Upload
 @patch("requests.post")
-def test_upload_documents_single_file(mock_post, camunda):
+@patch.object(Camunda, "set_output_variable")
+def test_upload_documents_single_file(mock_set_output_variable, mock_post, camunda):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"file1": "descriptor1"}
@@ -229,11 +230,12 @@ def test_upload_documents_single_file(mock_post, camunda):
 
     result = camunda.upload_documents("file1.txt")
     assert result == "descriptor1"
-    assert camunda.outputs == {}
+    mock_set_output_variable.assert_not_called()
 
 
 @patch("requests.post")
-def test_upload_documents_multiple_files(mock_post, camunda):
+@patch.object(Camunda, "set_output_variable")
+def test_upload_documents_multiple_files(mock_set_output_variable, mock_post, camunda):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"file1": "descriptor1", "file2": "descriptor2"}
@@ -241,11 +243,14 @@ def test_upload_documents_multiple_files(mock_post, camunda):
 
     result = camunda.upload_documents("*.txt")
     assert result == ["descriptor1", "descriptor2"]
-    assert camunda.outputs == {}
+    mock_set_output_variable.assert_not_called()
 
 
 @patch("requests.post")
-def test_upload_documents_with_variable_name(mock_post, camunda):
+@patch.object(Camunda, "set_output_variable")
+def test_upload_documents_with_variable_name(
+    mock_set_output_variable, mock_post, camunda
+):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"file1": "descriptor1"}
@@ -253,7 +258,7 @@ def test_upload_documents_with_variable_name(mock_post, camunda):
 
     result = camunda.upload_documents("file1.txt", variableName="fileDescriptor")
     assert result == "descriptor1"
-    assert camunda.outputs == {"fileDescriptor": "descriptor1"}
+    mock_set_output_variable.assert_called_once_with("fileDescriptor", "descriptor1")
 
 
 @patch("requests.post")
@@ -334,7 +339,8 @@ def test_download_documents_non_200_response(mock_post, camunda):
 
 
 @patch("requests.post")
-def test_roundtrip_single_file(mock_post, camunda):
+@patch.object(Camunda, "set_output_variable")
+def test_roundtrip_single_file(mock_set_output_variable, mock_post, camunda):
     fileDescriptor = {"metadata": {"fileName": "file1.txt"}}
 
     mock_post_response = Mock()
@@ -351,13 +357,14 @@ def test_roundtrip_single_file(mock_post, camunda):
 
     path = camunda.download_documents(descriptors)
     assert path == "file1.txt"
-    assert camunda.outputs == {
-        "fileDescriptor": {"metadata": {"fileName": "file1.txt"}}
-    }
+    mock_set_output_variable.assert_called_once_with(
+        "fileDescriptor", {"metadata": {"fileName": "file1.txt"}}
+    )
 
 
 @patch("requests.post")
-def test_roundtrip_single_file(mock_post, camunda):
+@patch.object(Camunda, "set_output_variable")
+def test_roundtrip_single_file(mock_set_output_variable, mock_post, camunda):
     file1Descriptor = {"metadata": {"fileName": "file1.txt"}}
     file2Descriptor = {"metadata": {"fileName": "file2.txt"}}
 
@@ -381,9 +388,60 @@ def test_roundtrip_single_file(mock_post, camunda):
 
     paths = camunda.download_documents(descriptors)
     assert paths == ["file1.txt", "file2.txt"]
-    assert camunda.outputs == {
-        "fileDescriptor": [
+    mock_set_output_variable.assert_called_once_with(
+        "fileDescriptor",
+        [
             {"metadata": {"fileName": "file1.txt"}},
             {"metadata": {"fileName": "file2.txt"}},
-        ]
-    }
+        ],
+    )
+
+
+@patch("requests.post")
+@patch("os.environ", {"RPA_WORKSPACE_ID": "workspace_id"})
+def test_set_output_variable_success(mock_post):
+    camunda = Camunda()
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_post.return_value = mock_response
+
+    camunda.set_output_variable("result", "Hello, World!")
+
+    mock_post.assert_called_once_with(
+        "http://127.0.0.1:36227/workspace/workspace_id/variables",
+        headers={"Content-Type": "application/json"},
+        data=json.dumps(
+            {
+                "variables": {
+                    "result": "Hello, World!",
+                }
+            }
+        ),
+    )
+
+
+@patch("requests.post")
+@patch("os.environ", {"RPA_WORKSPACE_ID": "workspace_id"})
+def test_set_output_variable_failure(mock_post):
+    camunda = Camunda()
+
+    mock_response = Mock()
+    mock_response.status_code = 500
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError
+    mock_post.return_value = mock_response
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        camunda.set_output_variable("result", "Hello, World!")
+
+    mock_post.assert_called_once_with(
+        "http://127.0.0.1:36227/workspace/workspace_id/variables",
+        headers={"Content-Type": "application/json"},
+        data=json.dumps(
+            {
+                "variables": {
+                    "result": "Hello, World!",
+                }
+            }
+        ),
+    )
