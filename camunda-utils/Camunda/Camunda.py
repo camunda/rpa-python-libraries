@@ -176,10 +176,6 @@ class Camunda:
 
         fileDescriptors = list(response.json().values())
 
-        # If we only have 1 file, return the file descriptor as a string
-        if len(fileDescriptors) == 1:
-            fileDescriptors = fileDescriptors[0]
-
         if variableName:
             self.set_output_variable(variableName, fileDescriptors)
 

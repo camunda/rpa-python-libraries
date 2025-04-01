@@ -229,7 +229,7 @@ def test_upload_documents_single_file(mock_set_output_variable, mock_post, camun
     mock_post.return_value = mock_response
 
     result = camunda.upload_documents("file1.txt")
-    assert result == "descriptor1"
+    assert result == ["descriptor1"]
     mock_set_output_variable.assert_not_called()
 
 
@@ -257,8 +257,8 @@ def test_upload_documents_with_variable_name(
     mock_post.return_value = mock_response
 
     result = camunda.upload_documents("file1.txt", variableName="fileDescriptor")
-    assert result == "descriptor1"
-    mock_set_output_variable.assert_called_once_with("fileDescriptor", "descriptor1")
+    assert result == ["descriptor1"]
+    mock_set_output_variable.assert_called_once_with("fileDescriptor", ["descriptor1"])
 
 
 @patch("requests.post")
