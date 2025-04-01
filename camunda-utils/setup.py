@@ -6,7 +6,7 @@ os.chdir(setup_dir)
 
 setup(
     name="camunda-utils",
-    version="0.5.0",
+    version="1.0.0",
     description="Offer keywords to interact with Camunda from the RPA worker",
     author="Camunda Services GmbH",
     author_email="info@camunda.com",
