@@ -152,17 +152,17 @@ class Camunda:
         .. code-block:: robotframework
 
             # Upload a single file
-            Upload Document    path/to/file.txt
+            ${fileDescriptor}=   Upload Document    path/to/file.txt
             Set Output Variable    fileDescriptor    ${fileDescriptor}
 
             # Directly store the file descriptor in a variable
-            Upload Document    path/to/file.txt
+            Upload Document    path/to/file.txt     variableName="fileDescriptor"
 
             # Upload all files in a directory
             Upload Document    path/to/directory/*   variableName="invoices"
 
             # Upload all .pdf files in the workspace
-            Set Output Variable    fileDescriptor    variableName="invoices"
+            Upload Document    *.pdf   variableName="pdfs"
         """
         url = f"{self.base_url}/file/store/{self.workspace_id}"
         headers = {"Content-Type": "application/json"}
