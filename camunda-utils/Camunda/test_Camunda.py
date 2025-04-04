@@ -1,7 +1,11 @@
 import pytest
 import requests
 import json
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, MagicMock
+
+from requests import HTTPError
+from robot.libraries.BuiltIn import BuiltIn
+
 from .Camunda import Camunda, Secrets
 
 
@@ -210,6 +214,29 @@ def test_throw_bpmn_error_variables(mock_post):
     assert excinfo.value.ROBOT_EXIT_ON_FAILURE is True
 
 
+@patch("requests.post")
+def test_throw_bpmn_error_handle_stubbed_response(mock_post):
+    # given:
+    camunda = Camunda()
+    mock_response = MagicMock()
+    mock_response.status_code = 501
+    mock_response.raise_for_status = Mock(side_effect=HTTPError())
+    mock_post.return_value = mock_response
+
+    # when:
+    with pytest.raises(Exception, match="ERROR_CODE - Error message") as excinfo:
+        camunda.throw_bpmn_error("ERROR_CODE", "Error message")
+
+    # then:
+    mock_post.assert_called_once_with(
+        "http://127.0.0.1:36227/zeebe/job/-1/throw",
+        headers={'Content-Type': 'application/json'},
+        data='{"errorCode": "ERROR_CODE", "errorMessage": "Error message"}')
+    
+    # and:
+    assert excinfo.value.ROBOT_EXIT_ON_FAILURE is True
+
+
 ### File Handling
 @pytest.fixture
 def camunda():
@@ -270,6 +297,18 @@ def test_upload_documents_non_200_response(mock_post, camunda):
 
     with pytest.raises(requests.exceptions.HTTPError):
         camunda.upload_documents("file1.txt")
+
+@patch("requests.post")
+def test_upload_documents_handle_stubbed_response(mock_post):
+    # given:
+    camunda = Camunda()
+    mock_response = MagicMock()
+    mock_response.status_code = 501
+    mock_response.raise_for_status = Mock(side_effect=HTTPError())
+    mock_post.return_value = mock_response
+
+    # expect:
+    camunda.upload_documents("file1.txt")
 
 
 # File Download
@@ -334,6 +373,28 @@ def test_download_documents_non_200_response(mock_post, camunda):
     with pytest.raises(requests.exceptions.HTTPError):
         camunda.download_documents({"metadata": {"fileName": "file1.txt"}})
 
+
+@patch("requests.post")
+@patch("robot.libraries.BuiltIn.BuiltIn.fatal_error")
+def test_download_documents_handle_stubbed_response(mock_fatal_error, mock_post):
+    # given:
+    camunda = Camunda()
+    
+    mock_response = Mock()
+    mock_response.status_code = 501
+    mock_response.raise_for_status = Mock(side_effect=HTTPError())
+    mock_response.json.return_value = {"target": "DocumentClient", "action": "getDocuments", "request":{}}
+    mock_post.return_value = mock_response
+    
+    # and:
+    mock_fatal_error.side_effect = AssertionError()
+
+    # when:
+    with(pytest.raises(AssertionError)):
+        camunda.download_documents({"metadata": {"fileName": "file1.txt"}})
+    
+    # then:
+    mock_fatal_error.assert_called_once()
 
 # Roundtrip
 
