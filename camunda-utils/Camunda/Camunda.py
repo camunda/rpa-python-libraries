@@ -84,7 +84,7 @@ class Camunda:
 
         .. _Camunda docs: https://docs.camunda.io/docs/components/best-practices/development/dealing-with-problems-and-exceptions/#handling-errors-on-the-process-level
         """
-        url = f"{self.base_url}/zeebe/job/{self.job_key}/throw"
+        url = f"{self.base_url}/zeebe/job/{self.job_key or -1}/throw"
         headers = {"Content-Type": "application/json"}
 
         data = {
@@ -98,9 +98,8 @@ class Camunda:
             data["variables"] = variables
 
         response = requests.post(url, headers=headers, data=json.dumps(data))
-
-        if response.status_code != 202:
-            response.raise_for_status()
+        
+        self._check_response(response, 202)
 
         # Stop the script execution and only do teardown after this keyword
         BuiltIn().fatal_error(
@@ -170,10 +169,9 @@ class Camunda:
         data = {"files": glob}
 
         response = requests.post(url, headers=headers, data=json.dumps(data))
-
-        if response.status_code != 200:
-            response.raise_for_status()
-
+        
+        self._check_response(response, 200)
+        
         fileDescriptors = list(response.json().values())
 
         if variableName:
@@ -214,8 +212,8 @@ class Camunda:
 
         response = requests.post(url, headers=headers, data=json.dumps(fileDescriptor))
 
-        if response.status_code != 200:
-            response.raise_for_status()
+        self._check_response(response, 200, 
+                             lambda ignored: BuiltIn().fatal_error("Cannot continue after stub call to Download Documents"))
 
         downloadedFiles = [
             file for file, result in response.json().items() if result["result"] == "OK"
@@ -234,3 +232,14 @@ class Camunda:
             return downloadedFiles[0]
 
         return downloadedFiles
+    
+    def _check_response(self, response, expected, stub_handler = (lambda r: None)):
+        if response.status_code == 501:
+            return self._handle_stub_response(response, stub_handler)
+        if response.status_code != expected:
+            response.raise_for_status()
+        
+    def _handle_stub_response(self, response, stub_handler):
+        logger.info(f"STUB: {response.json()['target']}→{response.json()['action']}\n" +
+                    json.dumps(dict(response.json()['request']), indent=4))
+        stub_handler(response)
