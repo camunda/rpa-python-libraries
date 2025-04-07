@@ -6,7 +6,7 @@ os.chdir(setup_dir)
 
 setup(
     name="camunda-rpa",
-    version="1.0.0",
+    version="9.9.9-SNAPSHOT",
     description="Exposes RPA libraries under the Camunda namespace",
     author="Camunda Services GmbH",
     author_email="info@camunda.com",
