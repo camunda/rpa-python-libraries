@@ -53,8 +53,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ env.library }}/dist/${{ env.library }}-${{ env.version }}.tar.gz
-          asset_name: ${{ env.library }}-${{ env.version }}.tar.gz
+          asset_path: ${{ env.library }}/dist/${{ env.library_underscore }}-${{ env.version }}.tar.gz
+          asset_name: ${{ env.library_underscore }}-${{ env.version }}.tar.gz
           asset_content_type: application/gzip
 
       - name: Upload Wheel Asset
