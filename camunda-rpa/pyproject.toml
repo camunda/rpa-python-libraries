@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "camunda-rpa"
+version = "9.9.9.dev0"
+description = "Exposes RPA libraries under the Camunda namespace"
+authors = [
+    { name = "Camunda Services GmbH", email = "info@camunda.com" }
+]
+license-files = ["LICENSE"] 
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "rpaframework>=30",
+    "rpaframework-pdf>=8",
+    "rpaframework-windows>=9"
+]
+
+[project.urls]
+Homepage = "https://github.com/camunda/rpa-python-libraries"
