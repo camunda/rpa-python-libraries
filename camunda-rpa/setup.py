@@ -5,11 +5,6 @@ setup_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(setup_dir)
 
 setup(
-    name="camunda-rpa",
-    version="9.9.9-SNAPSHOT",
-    description="Exposes RPA libraries under the Camunda namespace",
-    author="Camunda Services GmbH",
-    author_email="info@camunda.com",
     packages=[
         "Camunda.Archive",
         "Camunda.Browser.Selenium",
@@ -33,10 +28,5 @@ setup(
         "Camunda.Tasks",
         "Camunda.Windows",
         "Camunda.Word.Application",
-    ],
-    install_requires=[
-        "rpaframework >= 30",
-        "rpaframework-pdf >= 8",
-        "rpaframework-windows >= 9",
     ],
 )
