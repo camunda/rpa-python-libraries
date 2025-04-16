@@ -1,11 +1,11 @@
 name: Publish Utils
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish. The exact tag name to be used.'
-        required: true
+  # TODO: change to appropriate event
+  pull_request:
+    branches:
+      - main
+
 
 permissions:
   id-token: write
@@ -15,9 +15,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
-        with:
-          ref: refs/tags/${{ github.event.inputs.version }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
