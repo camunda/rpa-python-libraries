@@ -52,11 +52,6 @@ jobs:
           sed -i 's/9.9.9.dev0/${{ env.version }}/' pyproject.toml
           python -m build
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: ${{ env.library }}/dist
-
       - name: Create GH Release
         id: create_release
         uses: ncipollo/release-action@v1
@@ -64,3 +59,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           artifacts: ${{ env.library }}/dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ${{ env.library }}/dist
