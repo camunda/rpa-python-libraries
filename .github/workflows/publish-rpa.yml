@@ -1,14 +1,19 @@
-name: Build and Release Library
+name: Publish RPA
 
 on:
-  release:
-    types:
-      - created
+  push:
+    tags:
+      - '*'
+
+
+permissions:
+  id-token: write
+  contents: write
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
-
+    if: startsWith(github.ref, 'refs/tags/camunda-rpa-v')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -47,22 +52,15 @@ jobs:
           sed -i 's/9.9.9.dev0/${{ env.version }}/' pyproject.toml
           python -m build
 
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
+      - name: Create GH Release
+        id: create_release
+        uses: ncipollo/release-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ env.library }}/dist/${{ env.library_underscore }}-${{ env.version }}.tar.gz
-          asset_name: ${{ env.library_underscore }}-${{ env.version }}.tar.gz
-          asset_content_type: application/gzip
+          artifacts: ${{ env.library }}/dist/*
 
-      - name: Upload Wheel Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ env.library }}/dist/${{ env.library_underscore }}-${{ env.version }}-py3-none-any.whl
-          asset_name: ${{ env.library_underscore }}-${{ env.version }}-py3-none-any.whl
-          asset_content_type: application/zip
+          packages-dir: ${{ env.library }}/dist
