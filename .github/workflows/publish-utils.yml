@@ -52,27 +52,38 @@ jobs:
           sed -i 's/9.9.9.dev0/${{ env.version }}/' pyproject.toml
           python -m build
 
-      # - name: Upload Release Assets
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }}
-      #     asset_path: ${{ env.library }}/dist/${{ env.library_underscore }}-${{ env.version }}.tar.gz
-      #     asset_name: ${{ env.library_underscore }}-${{ env.version }}.tar.gz
-      #     asset_content_type: application/gzip
-
-      # - name: Upload Wheel Asset
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }}
-      #     asset_path: ${{ env.library }}/dist/${{ env.library_underscore }}-${{ env.version }}-py3-none-any.whl
-      #     asset_name: ${{ env.library_underscore }}-${{ env.version }}-py3-none-any.whl
-      #     asset_content_type: application/zip
-
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ${{ env.library }}/dist
+
+      - name: Create GH Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true
+          prerelease: false
+
+      - name: Upload Tarball Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls the upload URL from the create_release step
+          asset_path: ${{ env.library }}/dist/${{ env.library_underscore }}-${{ env.version }}.tar.gz
+          asset_name: ${{ env.library_underscore }}-${{ env.version }}.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Wheel Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls the upload URL from the create_release step
+          asset_path: ${{ env.library }}/dist/${{ env.library_underscore }}-${{ env.version }}-py3-none-any.whl
+          asset_name: ${{ env.library_underscore }}-${{ env.version }}-py3-none-any.whl
+          asset_content_type: application/zip
