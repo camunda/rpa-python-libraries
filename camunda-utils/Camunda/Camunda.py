@@ -38,6 +38,9 @@ class Camunda:
         self.job_key = os.getenv("RPA_ZEEBE_JOB_KEY")
         self.base_url = os.getenv("RPA_BASE_URL", "http://127.0.0.1:36227")
         self.ROBOT_LIBRARY_LISTENER = self
+        self.requests_session = requests.session()
+        if os.getenv("SSL_NO_VERIFY") is not None:
+            self.requests_session.verify = False
 
         self._map_secrets()
 
@@ -97,7 +100,7 @@ class Camunda:
         if variables:
             data["variables"] = variables
 
-        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response = self.requests_session.post(url, headers=headers, data=json.dumps(data))
         
         self._check_response(response, 202)
 
@@ -133,7 +136,7 @@ class Camunda:
             }
         }
 
-        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response = self.requests_session.post(url, headers=headers, data=json.dumps(data))
 
         if response.status_code != 200:
             response.raise_for_status()
@@ -168,7 +171,7 @@ class Camunda:
 
         data = {"files": glob}
 
-        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response = self.requests_session.post(url, headers=headers, data=json.dumps(data))
         
         self._check_response(response, 200)
         
@@ -210,7 +213,7 @@ class Camunda:
         url = f"{self.base_url}/file/retrieve/{self.workspace_id}"
         headers = {"Content-Type": "application/json"}
 
-        response = requests.post(url, headers=headers, data=json.dumps(fileDescriptor))
+        response = self.requests_session.post(url, headers=headers, data=json.dumps(fileDescriptor))
 
         self._check_response(response, 200, 
                              lambda ignored: BuiltIn().fatal_error("Cannot continue after stub call to Download Documents"))

@@ -80,7 +80,7 @@ def test_secret_mapping_existing_variable(
         "RPA_WORKSPACE_ID": "workspace_id",
     },
 )
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_default_base_url(mock_post):
     camunda = Camunda()
 
@@ -102,7 +102,7 @@ def test_default_base_url(mock_post):
         "RPA_BASE_URL": "http://rpa-worker:12345",
     },
 )
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_custom_base_url(mock_post):
     camunda = Camunda()
 
@@ -122,7 +122,7 @@ def test_custom_base_url(mock_post):
 
 
 # Throw error without variables
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch("os.environ", {"RPA_ZEEBE_JOB_KEY": "12345"})
 def test_throw_bpmn_error(mock_post):
     camunda = Camunda()
@@ -148,7 +148,7 @@ def test_throw_bpmn_error(mock_post):
 
 
 # Throw error without errorMessage
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch("os.environ", {"RPA_ZEEBE_JOB_KEY": "12345"})
 def test_throw_bpmn_error_no_message(mock_post):
     camunda = Camunda()
@@ -175,7 +175,7 @@ def test_throw_bpmn_error_no_message(mock_post):
 
 
 # Throw error with variables
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch("os.environ", {"RPA_ZEEBE_JOB_KEY": "12345"})
 def test_throw_bpmn_error_variables(mock_post):
     camunda = Camunda()
@@ -214,7 +214,7 @@ def test_throw_bpmn_error_variables(mock_post):
     assert excinfo.value.ROBOT_EXIT_ON_FAILURE is True
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_throw_bpmn_error_handle_stubbed_response(mock_post):
     # given:
     camunda = Camunda()
@@ -247,7 +247,7 @@ def camunda():
 
 
 # File Upload
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch.object(Camunda, "set_output_variable")
 def test_upload_documents_single_file(mock_set_output_variable, mock_post, camunda):
     mock_response = Mock()
@@ -260,7 +260,7 @@ def test_upload_documents_single_file(mock_set_output_variable, mock_post, camun
     mock_set_output_variable.assert_not_called()
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch.object(Camunda, "set_output_variable")
 def test_upload_documents_multiple_files(mock_set_output_variable, mock_post, camunda):
     mock_response = Mock()
@@ -273,7 +273,7 @@ def test_upload_documents_multiple_files(mock_set_output_variable, mock_post, ca
     mock_set_output_variable.assert_not_called()
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch.object(Camunda, "set_output_variable")
 def test_upload_documents_with_variable_name(
     mock_set_output_variable, mock_post, camunda
@@ -288,7 +288,7 @@ def test_upload_documents_with_variable_name(
     mock_set_output_variable.assert_called_once_with("fileDescriptor", ["descriptor1"])
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_upload_documents_non_200_response(mock_post, camunda):
     mock_response = Mock()
     mock_response.status_code = 500
@@ -298,7 +298,7 @@ def test_upload_documents_non_200_response(mock_post, camunda):
     with pytest.raises(requests.exceptions.HTTPError):
         camunda.upload_documents("file1.txt")
 
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_upload_documents_handle_stubbed_response(mock_post):
     # given:
     camunda = Camunda()
@@ -312,7 +312,7 @@ def test_upload_documents_handle_stubbed_response(mock_post):
 
 
 # File Download
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_download_documents_single_file(mock_post, camunda):
     mock_response = Mock()
     mock_response.status_code = 200
@@ -323,7 +323,7 @@ def test_download_documents_single_file(mock_post, camunda):
     assert result == "file1.txt"
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_download_documents_multiple_files(mock_post, camunda):
     mock_response = Mock()
     mock_response.status_code = 200
@@ -342,7 +342,7 @@ def test_download_documents_multiple_files(mock_post, camunda):
     assert result == ["file1.txt", "file2.txt"]
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_download_documents_file_not_found(mock_post, camunda):
     mock_response = Mock()
     mock_response.status_code = 200
@@ -363,7 +363,7 @@ def test_download_documents_file_not_found(mock_post, camunda):
         mock_warn.assert_called_with("File file2.txt not found")
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_download_documents_non_200_response(mock_post, camunda):
     mock_response = Mock()
     mock_response.status_code = 500
@@ -374,7 +374,7 @@ def test_download_documents_non_200_response(mock_post, camunda):
         camunda.download_documents({"metadata": {"fileName": "file1.txt"}})
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch("robot.libraries.BuiltIn.BuiltIn.fatal_error")
 def test_download_documents_handle_stubbed_response(mock_fatal_error, mock_post):
     # given:
@@ -399,7 +399,7 @@ def test_download_documents_handle_stubbed_response(mock_fatal_error, mock_post)
 # Roundtrip
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch.object(Camunda, "set_output_variable")
 def test_roundtrip_single_file(mock_set_output_variable, mock_post, camunda):
     fileDescriptor = {"metadata": {"fileName": "file1.txt"}}
@@ -423,7 +423,7 @@ def test_roundtrip_single_file(mock_set_output_variable, mock_post, camunda):
     )
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch.object(Camunda, "set_output_variable")
 def test_roundtrip_single_file(mock_set_output_variable, mock_post, camunda):
     file1Descriptor = {"metadata": {"fileName": "file1.txt"}}
@@ -458,7 +458,7 @@ def test_roundtrip_single_file(mock_set_output_variable, mock_post, camunda):
     )
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch("os.environ", {"RPA_WORKSPACE_ID": "workspace_id"})
 def test_set_output_variable_success(mock_post):
     camunda = Camunda()
@@ -482,7 +482,7 @@ def test_set_output_variable_success(mock_post):
     )
 
 
-@patch("requests.post")
+@patch("requests.Session.post")
 @patch("os.environ", {"RPA_WORKSPACE_ID": "workspace_id"})
 def test_set_output_variable_failure(mock_post):
     camunda = Camunda()
@@ -506,3 +506,13 @@ def test_set_output_variable_failure(mock_post):
             }
         ),
     )
+    
+@patch("requests.session")
+@patch.dict("os.environ", {"SSL_NO_VERIFY": "true"})
+def test_disables_ssl_certificate_verification_from_env(mock_session):
+    instance = Mock()
+    mock_session.return_value = instance
+
+    Camunda() 
+
+    assert instance.verify is False
