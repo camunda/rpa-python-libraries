@@ -27,6 +27,11 @@ class Secrets(dict):
 class Camunda:
     """
     A Robot Framework library that provides keywords to interact with Camunda from the RPA worker.
+
+    Worker callbacks automatically send the execution-scoped ``RPA_CALLBACK_TOKEN``
+    supplied by the worker. Never log or persist this credential. It authorizes
+    only the running workspace and its associated job, and expires when execution
+    ends. The worker's API token and cluster credentials are not callback credentials.
     """
 
     ROBOT_LIBRARY_SCOPE = "GLOBAL"
@@ -39,6 +44,10 @@ class Camunda:
         self.base_url = os.getenv("RPA_BASE_URL", "http://127.0.0.1:36227")
         self.ROBOT_LIBRARY_LISTENER = self
         self.requests_session = requests.session()
+        self.requests_session.max_redirects = 0
+        callback_token = os.getenv("RPA_CALLBACK_TOKEN")
+        if callback_token:
+            self.requests_session.headers["Authorization"] = f"Bearer {callback_token}"
         if os.getenv("SSL_NO_VERIFY") is not None:
             self.requests_session.verify = False
 

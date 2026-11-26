@@ -72,6 +72,23 @@ def test_secret_mapping_existing_variable(
 
 # Worker configuration
 
+@patch("os.environ", {"RPA_CALLBACK_TOKEN": "execution-scoped-token"})
+def test_callback_authentication():
+    camunda = Camunda()
+
+    for path in [
+        "/workspace/workspace_id/variables",
+        "/file/store/workspace_id",
+        "/file/retrieve/workspace_id",
+        "/zeebe/job/12345/throw",
+    ]:
+        request = camunda.requests_session.prepare_request(
+            requests.Request("POST", camunda.base_url + path)
+        )
+        assert request.headers["Authorization"] == "Bearer execution-scoped-token"
+
+    assert camunda.requests_session.max_redirects == 0
+
 
 # Uses default BaseURL
 @patch(
